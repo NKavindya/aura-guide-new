@@ -12,6 +12,7 @@ import { Picker } from "@react-native-picker/picker";
 import { api } from "../../api/api";
 import { screenStyles, useScreenScrollStyle } from "../../styles/screenStyles";
 import { useTextColors } from "../../theme/themedHelpers";
+import { useTheme } from "../../theme/ThemeContext";
 import { prettifyCvLine } from "../../utils/cvFeedback";
 
 function avgPct(skills: { current_pct?: number }[]) {
@@ -33,6 +34,7 @@ export function ProfileScreen({
 }) {
   const { width } = useWindowDimensions();
   const tc = useTextColors();
+  const { colors } = useTheme();
   const scrollStyle = useScreenScrollStyle();
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(user);
@@ -131,8 +133,8 @@ export function ProfileScreen({
         title="Profile"
         subtitle="Your learning identity"
         rightAction={
-          <Pressable onPress={onNavigateSettings} style={styles.roundBtn}>
-            <Ionicons name="settings-outline" size={21} color={palette.text} />
+          <Pressable onPress={onNavigateSettings} style={[styles.roundBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="settings-outline" size={21} color={colors.text} />
           </Pressable>
         }
       />
@@ -268,7 +270,7 @@ export function ProfileScreen({
           <View style={styles.cvInsightBlock}>
             {cvInsights.strengths.length ? (
               <View style={styles.cvInsightColumn}>
-                <Text style={styles.cvInsightTitle}>Strengths</Text>
+                <Text style={[styles.cvInsightTitle, tc.text]}>Strengths</Text>
                 {cvInsights.strengths.slice(0, 8).map((line, i) => (
                   <Text key={`s-${i}`} style={[styles.cvBullet, tc.text]}>
                     • {prettifyCvLine(line)}
@@ -278,7 +280,7 @@ export function ProfileScreen({
             ) : null}
             {cvInsights.weaknesses.length ? (
               <View style={styles.cvInsightColumn}>
-                <Text style={styles.cvInsightTitle}>Growth areas</Text>
+                <Text style={[styles.cvInsightTitle, tc.text]}>Growth areas</Text>
                 {cvInsights.weaknesses.slice(0, 8).map((line, i) => (
                   <Text key={`w-${i}`} style={[styles.cvBullet, tc.text]}>
                     • {prettifyCvLine(line)}

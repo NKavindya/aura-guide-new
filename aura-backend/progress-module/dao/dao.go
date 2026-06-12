@@ -91,7 +91,7 @@ func GetDashboardSummary(ctx context.Context, email string) (*progress.Dashboard
 	summary.SkillAverage = am.Average
 	summary.SkillReadinessLabel = am.ReadinessLabel
 
-	dayStreak, err := upsertAndGetDayStreak(ctx, userID)
+	dayStreak, err := RecordDailyCheckIn(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -139,9 +139,34 @@ func GetDashboardSummary(ctx context.Context, email string) (*progress.Dashboard
 	return &summary, nil
 }
 
-func upsertAndGetDayStreak(ctx context.Context, userID int) (int, error) {
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+func calendarDayUTC(t time.Time) time.Time {
+	u := t.UTC()
+	return time.Date(u.Year(), u.Month(), u.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+func UserIDForEmail(ctx context.Context, email string) (int, error) {
+	var userID int
+	err := db.Pool.QueryRow(ctx, `SELECT id FROM user_student WHERE email = $1`, email).Scan(&userID)
+	return userID, err
+}
+
+// GetDayStreak returns the stored streak without mutating it.
+func GetDayStreak(ctx context.Context, userID int) (int, error) {
+	var numberOfDays int
+	err := db.Pool.QueryRow(ctx, `SELECT COALESCE(number_of_days, 0) FROM user_streak WHERE user_id = $1`, userID).Scan(&numberOfDays)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return numberOfDays, nil
+}
+
+// RecordDailyCheckIn updates streak for today's login and returns the current count.
+func RecordDailyCheckIn(ctx context.Context, userID int) (int, error) {
+	now := time.Now().UTC()
+	today := calendarDayUTC(now)
 	yesterday := today.AddDate(0, 0, -1)
 
 	var streakID int
@@ -152,7 +177,6 @@ func upsertAndGetDayStreak(ctx context.Context, userID int) (int, error) {
 		if !errors.Is(err, pgx.ErrNoRows) {
 			return 0, err
 		}
-		// no row yet
 		err = db.Pool.QueryRow(ctx, `INSERT INTO user_streak (user_id, number_of_days, last_updated) VALUES ($1, 1, $2) RETURNING number_of_days`, userID, now).Scan(&numberOfDays)
 		if err != nil {
 			return 0, err
@@ -160,7 +184,7 @@ func upsertAndGetDayStreak(ctx context.Context, userID int) (int, error) {
 		return numberOfDays, nil
 	}
 
-	lastDay := time.Date(lastUpdated.Year(), lastUpdated.Month(), lastUpdated.Day(), 0, 0, 0, 0, lastUpdated.Location())
+	lastDay := calendarDayUTC(lastUpdated)
 	switch {
 	case lastDay.Equal(today):
 		return numberOfDays, nil
@@ -174,4 +198,33 @@ func upsertAndGetDayStreak(ctx context.Context, userID int) (int, error) {
 		return 0, err
 	}
 	return numberOfDays, nil
+}
+
+type UpcomingTask struct {
+	Task          string
+	EndDateTime   time.Time
+}
+
+func GetUpcomingTaskDeadlines(ctx context.Context, email string, within time.Duration) ([]UpcomingTask, error) {
+	tasks, err := taskdao.GetTaskPlan(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	now := time.Now().UTC()
+	limit := now.Add(within)
+	out := make([]UpcomingTask, 0)
+	for _, task := range tasks {
+		if strings.EqualFold(task.Status, "completed") || task.EndDateTime == nil {
+			continue
+		}
+		end := task.EndDateTime.UTC()
+		if !end.Before(now) && !end.After(limit) {
+			out = append(out, UpcomingTask{Task: task.Task, EndDateTime: end})
+		}
+	}
+	return out, nil
+}
+
+func upsertAndGetDayStreak(ctx context.Context, userID int) (int, error) {
+	return RecordDailyCheckIn(ctx, userID)
 }

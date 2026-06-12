@@ -9,7 +9,7 @@ import { setTheme } from "./src/theme";
 import { ThemeProvider } from "./src/theme/ThemeContext";
 import { Route, TabRoute, UserProfile } from "./src/types";
 import { initialProfile, tabRoutes } from "./src/constants";
-import { notificationSeed } from "./src-native/mockData";
+import { NotificationItem } from "./src/scenes/Notifications";
 
 // Components
 import { BottomTabs } from "./src/components/BottomTabs";
@@ -45,7 +45,7 @@ export default function App() {
   const [tab, setTab] = useState<TabRoute>("dashboard");
   const [user, setUser] = useState<UserProfile>(initialProfile);
   const [tempPassword, setTempPassword] = useState("");
-  const [notifications, setNotifications] = useState(notificationSeed);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [settings, setSettings] = useState({
     notifications: true,
     darkMode: false,
@@ -57,6 +57,16 @@ export default function App() {
 
   const clearPendingAgentTask = useCallback(() => {
     setPendingAgentTask(undefined);
+  }, []);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      const data = await api.getNotifications();
+      const list = Array.isArray(data?.notifications) ? data.notifications : [];
+      setNotifications(list);
+    } catch {
+      setNotifications([]);
+    }
   }, []);
 
   const fetchProfile = async () => {
@@ -102,6 +112,8 @@ export default function App() {
       setIsReturningUser(returning);
       const ok = await fetchProfile();
       if (ok) {
+        await api.recordCheckIn().catch(() => {});
+        await loadNotifications();
         setRoute("dashboard");
       } else {
         setRoute("signin");
@@ -136,10 +148,12 @@ export default function App() {
     }
     try {
       await api.login({ email: normalizedEmail, password: passwordValue });
+      await api.recordCheckIn().catch(() => {});
       const ok = await fetchProfile();
       if (ok) {
         await AsyncStorage.setItem("aura_returning_user", "1");
         setIsReturningUser(true);
+        await loadNotifications();
         setRoute("dashboard");
       }
     } catch (err) {
@@ -279,7 +293,15 @@ export default function App() {
           <NotificationsScreen
             notifications={notifications}
             onBack={() => setRoute("dashboard")}
-            onMarkAllRead={() => setNotifications((n) => n.map((item) => ({ ...item, read: true })))}
+            onRefresh={loadNotifications}
+            onMarkAllRead={async () => {
+              try {
+                await api.markAllNotificationsRead();
+              } catch {
+                /* ignore */
+              }
+              setNotifications((n) => n.map((item) => ({ ...item, read: true })));
+            }}
           />
         );
       case "calendar":

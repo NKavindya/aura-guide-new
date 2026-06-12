@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
-import { Alert, ScrollView, StyleSheet, Switch, Text, View, Pressable } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { confirmAction, showAlert } from "../../utils/alert";
 import { useScreenScrollStyle } from "../../styles/screenStyles";
 import { useTheme } from "../../theme/ThemeContext";
 import { AppCard } from "../../components/AppCard";
@@ -52,26 +53,18 @@ export function SettingsScreen({
   );
 
   const confirmDelete = () => {
-    Alert.alert(
-      "Delete account",
-      "This permanently removes your profile, tasks, scores, and chat history. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            void (async () => {
-              try {
-                await onDeleteAccount?.();
-              } catch (e) {
-                Alert.alert("Delete failed", (e as Error).message);
-              }
-            })();
-          },
-        },
-      ],
-    );
+    void (async () => {
+      const ok = await confirmAction(
+        "Delete account",
+        "This permanently removes your profile, tasks, scores, and chat history. This cannot be undone.",
+      );
+      if (!ok) return;
+      try {
+        await onDeleteAccount?.();
+      } catch (e) {
+        showAlert("Delete failed", (e as Error).message);
+      }
+    })();
   };
 
   return (

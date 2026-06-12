@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { AppCard } from "../../components/AppCard";
 import { InputField } from "../../components/InputField";
@@ -12,6 +12,7 @@ export function ResetPasswordScreen({ onBack }: { onBack: () => void }) {
   const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [step, setStep] = useState<"email" | "done">("email");
 
   const styles = useMemo(
     () =>
@@ -35,12 +36,7 @@ export function ResetPasswordScreen({ onBack }: { onBack: () => void }) {
           borderWidth: 1,
           borderColor: colors.border,
         },
-        authTitle: {
-          fontSize: 30,
-          fontWeight: "800",
-          color: colors.text,
-          textAlign: "center",
-        },
+        authTitle: { fontSize: 30, fontWeight: "800", color: colors.text, textAlign: "center" },
         authSubtitle: {
           maxWidth: 320,
           textAlign: "center",
@@ -50,12 +46,9 @@ export function ResetPasswordScreen({ onBack }: { onBack: () => void }) {
         },
         authCard: { gap: 14 },
         errorText: { color: colors.danger, fontWeight: "600" },
-        notice: {
-          color: colors.muted,
-          fontSize: 13,
-          lineHeight: 20,
-          fontWeight: "600",
-        },
+        notice: { color: colors.muted, fontSize: 13, lineHeight: 20, fontWeight: "600" },
+        doneTitle: { fontSize: 18, fontWeight: "800", color: colors.text },
+        doneBody: { color: colors.muted, lineHeight: 22, fontWeight: "600" },
       }),
     [colors],
   );
@@ -67,12 +60,31 @@ export function ResetPasswordScreen({ onBack }: { onBack: () => void }) {
       return;
     }
     setError("");
-    Alert.alert(
-      "Email reset not available",
-      "Password reset by email is not enabled in this version. Please sign in with your existing password or contact your administrator.",
-      [{ text: "OK", onPress: onBack }],
-    );
+    setStep("done");
   };
+
+  if (step === "done") {
+    return (
+      <ScrollView contentContainerStyle={styles.authScroll}>
+        <View style={styles.authHero}>
+          <View style={styles.logoBubble}>
+            <Feather name="info" size={34} color={colors.primary} />
+          </View>
+          <Text style={styles.authTitle}>Reset not available yet</Text>
+          <Text style={styles.authSubtitle}>
+            We saved your request for {email.trim().toLowerCase()}, but email-based password reset is not configured on this server.
+          </Text>
+        </View>
+        <AppCard style={styles.authCard}>
+          <Text style={styles.doneTitle}>What you can do</Text>
+          <Text style={styles.doneBody}>
+            Sign in with your existing password if you remember it, or contact your course administrator to reset your account manually.
+          </Text>
+          <PrimaryButton label="Back to Sign In" onPress={onBack} />
+        </AppCard>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.authScroll}>
@@ -81,18 +93,15 @@ export function ResetPasswordScreen({ onBack }: { onBack: () => void }) {
           <Feather name="mail" size={34} color={colors.primary} />
         </View>
         <Text style={styles.authTitle}>Reset Password</Text>
-        <Text style={styles.authSubtitle}>
-          Email-based password reset is not configured for this app yet.
-        </Text>
+        <Text style={styles.authSubtitle}>Enter the email on your account to continue.</Text>
       </View>
 
       <AppCard style={styles.authCard}>
         <Text style={styles.notice}>
-          If you forgot your password, use an account you can still access or ask your course administrator to help.
-          We do not send reset links until an email service is connected on the server.
+          Email reset links are not enabled in this version. Continue to see next steps for your account.
         </Text>
         <InputField
-          label="Email (for your records)"
+          label="Email"
           placeholder="you@university.edu"
           value={email}
           onChangeText={(v) => {

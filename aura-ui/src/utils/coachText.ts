@@ -26,6 +26,8 @@ export function sanitizeCoachDisplayText(raw: string): string {
 
   t = t.replace(/```[\s\S]*?```/g, "").replace(/\*\*([^*]+)\*\*/g, "$1");
   t = t.replace(/^#+\s*/gm, "");
+  t = t.replace(/\{[\s\S]*?"(?:clear|concise|complete|correct|considerate|concrete|courteous|updated|status|message)"[\s\S]*?\}/g, " ");
+  t = t.replace(/\s{2,}/g, " ").trim();
   if (t.startsWith("{") && (t.includes("'id'") || t.includes('"id"'))) {
     return "The coach could not format this response. Try again or use Next question.";
   }

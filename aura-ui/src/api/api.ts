@@ -282,6 +282,33 @@ export const api = {
     return response.json();
   },
 
+  async getNotifications() {
+    const response = await fetch(`${API_BASE_URL}/notification/list`, {
+      method: "GET",
+      headers: await authHeaders(false),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  },
+
+  async markAllNotificationsRead() {
+    const response = await fetch(`${API_BASE_URL}/notification/mark-all-read`, {
+      method: "POST",
+      headers: await authHeaders(),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  },
+
+  async recordCheckIn() {
+    const response = await fetch(`${API_BASE_URL}/progress/check-in`, {
+      method: "POST",
+      headers: await authHeaders(),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  },
+
   async getBehavioralInterviewFeedback() {
     const response = await fetch(`${API_BASE_URL}/aura-life-coach/BehavioralInterviewFeedback`, {
       method: "GET",

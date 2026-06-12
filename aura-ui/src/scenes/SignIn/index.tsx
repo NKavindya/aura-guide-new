@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { AppCard } from "../../components/AppCard";
 import { InputField } from "../../components/InputField";
@@ -50,6 +50,8 @@ export function SignInScreen({
         authCard: { gap: 14 },
         footerRow: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 4 },
         footerText: { color: colors.muted, fontWeight: "600" },
+        showHideBtn: { paddingHorizontal: 4, paddingVertical: 6 },
+        showHideText: { color: colors.primary, fontWeight: "800", fontSize: 13 },
       }),
     [colors],
   );
@@ -79,11 +81,10 @@ export function SignInScreen({
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
-          icon={
-            <TextLink
-              label={showPassword ? "Hide" : "Show"}
-              onPress={() => setShowPassword((v) => !v)}
-            />
+          trailingAccessory={
+            <Pressable onPress={() => setShowPassword((v) => !v)} style={styles.showHideBtn} hitSlop={8}>
+              <Text style={styles.showHideText}>{showPassword ? "Hide" : "Show"}</Text>
+            </Pressable>
           }
         />
         <TextLink label="Forgot password?" onPress={onOpenReset} />

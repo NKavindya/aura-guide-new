@@ -22,3 +22,11 @@ func GetCompletedTasks(ctx context.Context, email string) ([]progress.Task, erro
 func GetDashboardSummary(ctx context.Context, email string) (*progress.DashboardSummary, error) {
 	return dao.GetDashboardSummary(ctx, email)
 }
+
+func RecordCheckIn(ctx context.Context, email string) (int, error) {
+	userID, err := dao.UserIDForEmail(ctx, email)
+	if err != nil {
+		return 0, err
+	}
+	return dao.RecordDailyCheckIn(ctx, userID)
+}

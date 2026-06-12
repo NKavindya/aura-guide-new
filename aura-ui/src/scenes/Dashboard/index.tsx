@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { palette, commonStyles } from "../../theme";
@@ -11,6 +11,7 @@ import { UserProfile, Route, TabRoute } from "../../types";
 import { api } from "../../api/api";
 import { screenStyles, useScreenScrollStyle } from "../../styles/screenStyles";
 import { useTextColors } from "../../theme/themedHelpers";
+import { useTheme } from "../../theme/ThemeContext";
 
 function formatToday() {
   return new Date().toLocaleDateString("en-US", {
@@ -64,8 +65,37 @@ export function DashboardScreen({
   onSignOut: () => void;
 }) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
   const tc = useTextColors();
   const scrollStyle = useScreenScrollStyle(styles.screenRoot);
+  const themed = useMemo(
+    () =>
+      StyleSheet.create({
+        iconButton: {
+          width: 42,
+          height: 42,
+          borderRadius: 12,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        calendarRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+          paddingVertical: 14,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          marginBottom: 4,
+        },
+      }),
+    [colors],
+  );
   const [tasks, setTasks] = useState<any[]>([]);
   const [todayPlan, setTodayPlan] = useState<any[]>([]);
   const [dayStreak, setDayStreak] = useState(1);
@@ -89,7 +119,6 @@ export function DashboardScreen({
       .catch(() => {
         setTasks([]);
         setTodayPlan([]);
-        setDayStreak(1);
         setScore(user.currentScore || 0);
         setReadiness(user.skillReadinessLabel || "");
       });
@@ -128,11 +157,11 @@ export function DashboardScreen({
         }
         rightAction={
           <View style={styles.headerActions}>
-            <Pressable onPress={() => onNavigate("notifications")} style={styles.iconButton}>
-              <Ionicons name="notifications-outline" size={20} color={palette.text} />
+            <Pressable onPress={() => onNavigate("notifications")} style={themed.iconButton}>
+              <Ionicons name="notifications-outline" size={20} color={colors.text} />
             </Pressable>
-            <Pressable onPress={onSignOut} style={styles.iconButton}>
-              <Ionicons name="log-out-outline" size={20} color={palette.text} />
+            <Pressable onPress={onSignOut} style={themed.iconButton}>
+              <Ionicons name="log-out-outline" size={20} color={colors.text} />
             </Pressable>
           </View>
         }
@@ -215,7 +244,7 @@ export function DashboardScreen({
       {/*  </Pressable>*/}
       {/*</View>*/}
       <Pressable
-        style={({ pressed }) => [styles.calendarRow, pressed && styles.quickPressed]}
+        style={({ pressed }) => [themed.calendarRow, pressed && styles.quickPressed]}
         onPress={() => onNavigate("calendar")}
       >
         <View style={[styles.quickIconOuter, { backgroundColor: palette.chipBlue }]}>
@@ -261,7 +290,7 @@ export function DashboardScreen({
 
       {tasks.length === 0 ? (
         <AppCard variant="muted">
-          <Text style={styles.emptyMuted}>You're all caught up on active tasks!</Text>
+          <Text style={[styles.emptyMuted, tc.muted]}>You're all caught up on active tasks!</Text>
         </AppCard>
       ) : null}
 
@@ -269,7 +298,7 @@ export function DashboardScreen({
         <AppCard key={task.id} style={[styles.taskCard, styles.taskCardModern]}>
           <View style={styles.taskRow}>
             <View style={commonStyles.flexOne}>
-              <Text selectable style={styles.ongoingTaskBody}>
+              <Text selectable style={[styles.ongoingTaskBody, tc.text]}>
                 {task.task}
               </Text>
               <View style={[commonStyles.badgeRow, styles.taskBadges]}>
@@ -289,7 +318,7 @@ export function DashboardScreen({
           </View>
           <View style={styles.taskFooter}>
             <Ionicons name="calendar-outline" size={12} color={palette.muted} />
-            <Text style={styles.taskDate}>
+            <Text style={[styles.taskDate, tc.muted]}>
               {safeDate(task.start_date_time).slice(0, 10)}
               {safeDate(task.end_date_time) ? ` - ${safeDate(task.end_date_time).slice(0, 10)}` : ""}
             </Text>

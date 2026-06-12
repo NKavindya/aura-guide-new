@@ -13,6 +13,7 @@ import { useTheme } from "../../theme/ThemeContext";
 export function GoalsScreen() {
   const { width } = useWindowDimensions();
   const tc = useTextColors();
+  const { colors } = useTheme();
   const scrollStyle = useScreenScrollStyle();
   const [summary, setSummary] = useState<any>({
     completed_tasks: 0,
@@ -20,6 +21,7 @@ export function GoalsScreen() {
     career_title: "",
     aura_score_percent: 0,
     skill_readiness_label: "",
+    recommendation: "",
   });
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function GoalsScreen() {
             career_title: "",
             aura_score_percent: 0,
             skill_readiness_label: "",
+            recommendation: "",
           },
         ),
       )
@@ -43,6 +46,7 @@ export function GoalsScreen() {
           career_title: "",
           aura_score_percent: 0,
           skill_readiness_label: "",
+          recommendation: "",
         }),
       );
   }, []);
@@ -100,6 +104,13 @@ export function GoalsScreen() {
           {summary.skill_readiness_label ? ` · ${summary.skill_readiness_label}` : ""}
         </Text>
       </AppCard>
+
+      {summary.recommendation?.trim() ? (
+        <AppCard style={[styles.recCard, { borderLeftColor: colors.success }]}>
+          <Text style={[styles.recEyebrow, { color: colors.success }]}>Career recommendation</Text>
+          <Text style={[styles.recBody, tc.text]}>{summary.recommendation.trim()}</Text>
+        </AppCard>
+      ) : null}
 
       <SkillSection title="Technical Skills" subtitle="Core competencies for your role" tone="tech" skills={technicalSkills} empty="No technical skills found for this goal." />
 
@@ -161,10 +172,10 @@ function SkillSection({
               </View>
               <View style={styles.levelRow}>
                 <Text style={[styles.levelHint, tc.muted]}>
-                  Level: <Text style={styles.levelValue}>{skill.current_level || "Not assessed"}</Text>
+                  Level: <Text style={[styles.levelValue, tc.text]}>{skill.current_level || "Not assessed"}</Text>
                 </Text>
                 <Text style={[styles.levelHint, tc.muted]}>
-                  Target: <Text style={styles.levelValue}>{skill.required_level || "—"}</Text>
+                  Target: <Text style={[styles.levelValue, tc.text]}>{skill.required_level || "—"}</Text>
                 </Text>
               </View>
               <ProgressBar value={Math.min(skill.current_pct, 100)} color={barColor} />
@@ -253,6 +264,24 @@ const styles = StyleSheet.create({
     width: 1,
     height: 24,
     backgroundColor: "rgba(255,255,255,0.1)",
+  },
+  recCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: palette.success,
+    gap: 8,
+  },
+  recEyebrow: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: palette.success,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  recBody: {
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: "600",
+    color: palette.text,
   },
   sectionContainer: {
     marginTop: 24,

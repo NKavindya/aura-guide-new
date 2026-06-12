@@ -135,6 +135,7 @@ func main() {
 		r.Get("/progress/currentTask", progressApi.GetCurrentTaskHandler)
 		r.Get("/progress/CompletedTasks", progressApi.GetCompletedTasksHandler)
 		r.Get("/progress/dashboard", progressApi.GetDashboardSummaryHandler)
+		r.Post("/progress/check-in", progressApi.RecordCheckInHandler)
 
 		r.Get("/badges/earned", badgeApi.GetEarnedBadgesHandler)
 
@@ -146,6 +147,8 @@ func main() {
 
 		r.Get("/notification/dailyTaskReminder", notificationApi.GetDailyTaskReminderHandler)
 		r.Get("/notification/motivationalQuote", notificationApi.GetMotivationalQuoteHandler)
+		r.Get("/notification/list", notificationApi.ListNotificationsHandler)
+		r.Post("/notification/mark-all-read", notificationApi.MarkAllReadHandler)
 
 		r.Post("/settings/preferences", settingsApi.UpdatePreferencesHandler)
 		r.Post("/settings/notificationPreferences", settingsApi.UpdateNotificationPreferencesHandler)

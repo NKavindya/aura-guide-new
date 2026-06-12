@@ -80,16 +80,60 @@ def extract_json_object(text: str) -> dict:
     if not s:
         raise ValueError("empty model response")
 
+    # Prefer explicit JSON blocks the model often appends after prose.
+    for pattern in (
+        r"\{[^{}]*\"score\"[^{}]*\}",
+        r"\{[\s\S]*?\"feedback\"[\s\S]*?\}",
+    ):
+        for m in re.finditer(pattern, s):
+            try:
+                return _parse_loose_object(m.group(0))
+            except ValueError:
+                continue
+
     brace = s.find("{")
     if brace == -1:
+        parsed = _extract_fields_by_regex(s)
+        if parsed:
+            return parsed
         raise ValueError("no JSON object in response")
     chunk = _brace_match_object(s, brace)
     if not chunk:
+        parsed = _extract_fields_by_regex(s)
+        if parsed:
+            return parsed
         raise ValueError(
             "could not read structured response from the model. "
             "Try a shorter answer without special formatting."
         )
-    return _parse_loose_object(chunk)
+    try:
+        return _parse_loose_object(chunk)
+    except ValueError:
+        parsed = _extract_fields_by_regex(s)
+        if parsed:
+            return parsed
+        raise
+
+
+def _extract_fields_by_regex(text: str) -> dict | None:
+    """Last-resort parser when the model mixes prose with partial JSON."""
+    score_m = re.search(r'"score"\s*:\s*([123])', text)
+    if not score_m:
+        score_m = re.search(r"score\s*[:=]\s*([123])", text, re.IGNORECASE)
+    feedback_m = re.search(r'"feedback"\s*:\s*"((?:\\.|[^"\\])*)"', text, re.DOTALL)
+    if not feedback_m:
+        feedback_m = re.search(r'"feedback"\s*:\s*\'((?:\\.|[^\']\\)*)\'', text, re.DOTALL)
+    tip_m = re.search(r'"improvement_tip"\s*:\s*"((?:\\.|[^"\\])*)"', text, re.DOTALL)
+    if not score_m and not feedback_m:
+        return None
+    out: dict = {}
+    if score_m:
+        out["score"] = int(score_m.group(1))
+    if feedback_m:
+        out["feedback"] = feedback_m.group(1).replace("\\n", "\n").strip()
+    if tip_m:
+        out["improvement_tip"] = tip_m.group(1).replace("\\n", "\n").strip()
+    return out if out else None
 
 
 def _pick_display_field(data: dict) -> str:
@@ -136,6 +180,8 @@ def clean_coach_display_text(text: str) -> str:
 
     t = re.sub(r"\*\*([^*]+)\*\*", r"\1", t)
     t = re.sub(r"^#+\s*", "", t, flags=re.MULTILINE)
+    t = re.sub(r"^\s*\{[\s\S]*?\}\s*(?:,\s*\{[\s\S]*?\}\s*)*$", "", t).strip()
+    t = re.sub(r"\s*\{[\s\S]*?\"(?:clear|concise|updated|status)\"[\s\S]*?\}\s*", " ", t).strip()
     t = re.sub(r"^[`\"']+|[`\"']+$", "", t.strip())
     if t.startswith("{") and ("'id'" in t or '"id"' in t):
         return "Please try again — the coach could not format this response. Tap Next question or restart the flow."

@@ -764,7 +764,7 @@ TASK_DESCRIPTION:
 SKILL: {skill_name}
 
 USER_ANSWER:
-{user_answer}
+{user_answer[:12000]}
 
 USER_GOAL: {row['goal_name']}
 
@@ -784,13 +784,23 @@ OUTPUT FORMAT (STRICT JSON ONLY)
         raw = await structured_completion(system, user)
         data = extract_json_object(raw)
     except Exception:
-        raw2 = await structured_completion(
-            system,
-            user
-            + "\n\nYour last reply was not valid JSON. Output ONLY one JSON object with keys "
-            "skill, score (1-3), feedback (string), improvement_tip (string). No markdown.",
-        )
-        data = extract_json_object(raw2)
+        try:
+            raw2 = await structured_completion(
+                system,
+                user
+                + "\n\nYour last reply was not valid JSON. Output ONLY one JSON object with keys "
+                "skill, score (1-3), feedback (string), improvement_tip (string). No markdown.",
+            )
+            data = extract_json_object(raw2)
+        except Exception:
+            data = {
+                "score": 2,
+                "feedback": (
+                    "Your answer shows effort. For algorithmic tasks, break the solution into clear steps: "
+                    "problem understanding, approach, and expected outcome."
+                ),
+                "improvement_tip": "Use numbered steps and name data structures or algorithms explicitly.",
+            }
 
     score = max(1, min(3, int(data.get("score") or 2)))
     feedback = clean_coach_display_text(str(data.get("feedback") or ""))

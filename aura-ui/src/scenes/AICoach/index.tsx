@@ -21,6 +21,7 @@ import { api } from "../../api/api";
 import { screenPadding } from "../../styles/screenStyles";
 import { prettifyCvLine } from "../../utils/cvFeedback";
 import { formatCoachFeedback, formatCoachQuestion } from "../../utils/coachText";
+import { showAlert } from "../../utils/alert";
 
 const PROMPTS = [
   {
@@ -97,8 +98,11 @@ export function AICoachScreen({
 
   /** Prompt strip + CV: slightly taller on home; stays compact during flows so it stays reachable. */
   const promptBandMaxHeight = useMemo(() => {
-    const cap = height * (phase.kind === "home" ? 0.36 : 0.3);
-    return Math.min(Math.round(cap), phase.kind === "home" ? 320 : 260);
+    if (phase.kind === "communication" || phase.kind === "interview" || phase.kind === "reflection") {
+      return Math.min(Math.round(height * 0.18), 140);
+    }
+    const cap = height * (phase.kind === "home" ? 0.28 : 0.22);
+    return Math.min(Math.round(cap), phase.kind === "home" ? 260 : 200);
   }, [height, phase.kind]);
 
   const pushAura = useCallback((content: string, category?: string) => {
@@ -292,7 +296,7 @@ export function AICoachScreen({
     try {
       const res = await api.agentChat(label, null, "communication");
       setChatSessionId(res.session_id);
-      pushAura(res.reply, "Communication");
+      pushAura(formatCoachFeedback(res.reply), "Communication");
       if (res.follow_up?.trim()) {
         pushAura(formatCoachFeedback(res.follow_up.trim()), "Review");
       }
@@ -456,7 +460,7 @@ export function AICoachScreen({
       try {
         const res = await api.agentChat(content, chatSessionId, "communication");
         setChatSessionId(res.session_id);
-        pushAura(res.reply, "Communication");
+        pushAura(formatCoachFeedback(res.reply), "Communication");
         if (res.follow_up?.trim()) {
           pushAura(formatCoachFeedback(res.follow_up.trim()), "Review");
         }
@@ -511,6 +515,11 @@ export function AICoachScreen({
       const mime = (asset.mimeType || "").toLowerCase();
       const pdfMsg =
         "Only PDF files can be uploaded as your CV. Word, text, and other document types are not accepted — export your CV as PDF and try again.";
+      const blockedExt = [".doc", ".docx", ".txt", ".rtf", ".odt", ".pages", ".md"];
+      if (blockedExt.some((ext) => lower.endsWith(ext))) {
+        showAlert("PDF only", pdfMsg);
+        return;
+      }
       const blockedMime =
         mime.startsWith("text/") ||
         mime.includes("msword") ||
@@ -519,11 +528,11 @@ export function AICoachScreen({
         mime === "application/rtf" ||
         mime === "application/json";
       if (blockedMime) {
-        Alert.alert("PDF only", pdfMsg);
+        showAlert("PDF only", pdfMsg);
         return;
       }
       if (!lower.endsWith(".pdf")) {
-        Alert.alert("PDF only", pdfMsg);
+        showAlert("PDF only", pdfMsg);
         return;
       }
       if (mime) {
@@ -533,7 +542,7 @@ export function AICoachScreen({
           mime.endsWith("+pdf") ||
           (mime === "application/octet-stream" && lower.endsWith(".pdf"));
         if (!looksPdf) {
-          Alert.alert("PDF only", pdfMsg);
+          showAlert("PDF only", pdfMsg);
           return;
         }
       }
@@ -560,9 +569,9 @@ export function AICoachScreen({
       const summary = prettifyBulletLines(summaryRaw);
       setCvLocalSummary(summary);
       pushAura(`Here's your CV feedback.\n\n${summary}\n\n_Saved under Profile › CV & analysis._`, "CV feedback");
-      Alert.alert("CV feedback ready", "Strengths and growth areas are saved. View them anytime on Profile.");
+      showAlert("CV feedback ready", "Strengths and growth areas are saved. View them anytime on Profile.");
     } catch (e) {
-      Alert.alert("Upload failed", (e as Error).message);
+      showAlert("Upload failed", (e as Error).message);
     } finally {
       setIsUploading(false);
     }
@@ -893,7 +902,7 @@ const styles = StyleSheet.create({
   },
   chatScroll: {
     flex: 1,
-    minHeight: 0,
+    minHeight: 280,
   },
   taskContextCard: {
     borderLeftWidth: 4,

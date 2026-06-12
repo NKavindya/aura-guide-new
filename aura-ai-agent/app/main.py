@@ -19,6 +19,7 @@ from app.agent_workflows import (
 from app.chat_persist import append_message, resolve_session_id
 from app.auth import get_current_email
 from app.db import get_conn
+from app.json_utils import clean_coach_display_text
 from app.ollama_client import chat_communication_coach, chat_completion_with_flow
 from app.settings import settings
 
@@ -142,8 +143,8 @@ async def agent_chat(body: ChatRequest, email: str = Depends(get_current_email))
                 persist_professional_communication_score(email, ev["score"])
                 reply = "Session ended. Good job today!"
                 follow_up = (
-                    f"**Communication review** (1–3)\n\n**Score:** {ev['score']}/3\n\n"
-                    f"{ev['feedback']}"
+                    f"Communication review (1–3)\n\nScore: {ev['score']}/3\n\n"
+                    f"{clean_coach_display_text(str(ev.get('feedback') or ''))}"
                 )
             else:
                 reply = await chat_communication_coach(
