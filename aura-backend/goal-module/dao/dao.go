@@ -103,9 +103,7 @@ func GetGoalSummaryByEmail(ctx context.Context, email string) (*goal.GoalSummary
 		} else {
 			item.CurrentScore = int(math.Round(avgScore))
 			item.CurrentPct = avgScoreToPercent(avgScore)
-			if item.CurrentLevel == "" {
-				item.CurrentLevel = avgScoreToLevel(avgScore)
-			}
+			item.CurrentLevel = avgScoreToLevel(avgScore)
 		}
 		if item.RequiredLevel == "" {
 			item.RequiredLevel = scoreIDToLevel(item.RequiredScore)

@@ -49,6 +49,8 @@ function LinearQuickIcon({
   );
 }
 
+import { useThemedScreen } from "../../theme/useThemedScreen";
+
 export function DashboardScreen({
   user,
   isReturningUser = true,
@@ -70,6 +72,7 @@ export function DashboardScreen({
   const [readiness, setReadiness] = useState(user.skillReadinessLabel || "");
   const [reminder, setReminder] = useState("");
   const [quote, setQuote] = useState("");
+  const { colors, styles: themed } = useThemedScreen();
 
   const safeDate = (value: any) => (typeof value === "string" ? value : "");
 
@@ -113,7 +116,7 @@ export function DashboardScreen({
   const goTab = onNavigateTab ?? ((_t: TabRoute) => {});
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, styles.screenRoot]}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, styles.screenRoot, themed.screenBg]}>
       {/*<Text style={styles.appTitle}>AURA Guide – Your Personalized Career Coach</Text>*/}
       <ScreenHeader
         title={isReturningUser ? `Welcome back,\n${name}!` : `Welcome,\n${name}!`}
@@ -139,9 +142,9 @@ export function DashboardScreen({
         <AppCard style={[styles.metricCard, styles.metricCardElevated]}>
           <View style={styles.metricContent}>
             <View>
-              <Text style={styles.metricValue}>{score}</Text>
-              <Text style={styles.metricLabel}>Aura score (0–100)</Text>
-              {readiness ? <Text style={styles.metricHint}>{readiness}</Text> : null}
+              <Text style={[styles.metricValue, themed.title]}>{score}</Text>
+              <Text style={[styles.metricLabel, themed.subtitle]}>Aura score (0–100)</Text>
+              {readiness ? <Text style={[styles.metricHint, themed.subtitle]}>{readiness}</Text> : null}
             </View>
             <View style={[styles.metricIconWrap, { backgroundColor: palette.chipYellow }]}>
               <Ionicons name="trophy" size={28} color={palette.warning} />
@@ -151,8 +154,8 @@ export function DashboardScreen({
         <AppCard style={[styles.metricCard, styles.metricCardElevated]}>
           <View style={styles.metricContent}>
             <View>
-              <Text style={styles.metricValue}>{dayStreak}</Text>
-              <Text style={styles.metricLabel}>Day Streak</Text>
+              <Text style={[styles.metricValue, themed.title]}>{dayStreak}</Text>
+              <Text style={[styles.metricLabel, themed.subtitle]}>Day Streak</Text>
             </View>
             <View style={[styles.metricIconWrap, { backgroundColor: palette.chipGreen }]}>
               <Ionicons name="flame" size={28} color={palette.success} />
@@ -166,9 +169,9 @@ export function DashboardScreen({
           <View style={styles.goalIcon}>
             <Ionicons name="rocket" size={20} color={palette.primary} />
           </View>
-          <Text style={styles.eyebrow}>Career Track</Text>
+          <Text style={[styles.eyebrow, themed.subtitle]}>Career Track</Text>
         </View>
-        <Text style={styles.goalTitle}>{user.goal || "Set your goal in Profile"}</Text>
+          <Text style={[styles.goalTitle, themed.body]}>{user.goal || "Set your goal in Profile"}</Text>
       </AppCard>
 
       <AppCard style={styles.coachCard}>
@@ -176,11 +179,11 @@ export function DashboardScreen({
           <Ionicons name="bulb" size={20} color="#FBBF24" />
           <Text style={styles.coachEyebrow}>Insights for you</Text>
         </View>
-        <Text style={styles.coachBody}>{coachBody}</Text>
-        {coachSupporting ? <Text style={styles.coachSupport}>{coachSupporting}</Text> : null}
+        <Text style={[styles.coachBody, themed.body]}>{coachBody}</Text>
+        {coachSupporting ? <Text style={[styles.coachSupport, themed.subtitle]}>{coachSupporting}</Text> : null}
       </AppCard>
 
-      <Text style={[styles.sectionTitle, styles.sectionTitleSpaced]}>Quick Actions</Text>
+      <Text style={[styles.sectionTitle, styles.sectionTitleSpaced, themed.sectionTitle]}>Quick Actions</Text>
       {/*<View style={styles.quickActionsRow}>*/}
       {/*  <Pressable*/}
       {/*    style={({ pressed }) => [styles.quickActionTile, pressed && styles.quickPressed]}*/}
@@ -225,11 +228,11 @@ export function DashboardScreen({
 
       <AppCard style={commonStyles.stackMd}>
         <View style={styles.sectionHeadingRow}>
-          <Text style={styles.sectionTitle}>Today's Plan</Text>
+          <Text style={[styles.sectionTitle, themed.sectionTitle]}>Today's Plan</Text>
         </View>
         <View style={commonStyles.stackSm}>
           {todayPlan.length === 0 ? (
-            <Text style={styles.emptyMuted}>No tasks yet. Ask AI Coach to assign one, or add your own from Tasks.</Text>
+            <Text style={[styles.emptyMuted, themed.subtitle]}>No tasks yet. Ask AI Coach to assign one, or add your own from Tasks.</Text>
           ) : null}
           {todayPlan.map((item) => (
             <View key={`${item.id}-${item.task}`} style={styles.timelineRow}>
@@ -250,13 +253,13 @@ export function DashboardScreen({
       </AppCard>
 
       <View style={styles.sectionHeadingRow}>
-        <Text style={styles.sectionTitle}>Ongoing Tasks</Text>
+        <Text style={[styles.sectionTitle, themed.sectionTitle]}>Ongoing Tasks</Text>
         <TextLink label="View all" onPress={() => onNavigate("tasks")} />
       </View>
 
       {tasks.length === 0 ? (
         <AppCard variant="muted">
-          <Text style={styles.emptyMuted}>You're all caught up on active tasks!</Text>
+          <Text style={[styles.emptyMuted, themed.subtitle]}>You're all caught up on active tasks!</Text>
         </AppCard>
       ) : null}
 
@@ -264,7 +267,7 @@ export function DashboardScreen({
         <AppCard key={task.id} style={[styles.taskCard, styles.taskCardModern]}>
           <View style={styles.taskRow}>
             <View style={commonStyles.flexOne}>
-              <Text selectable style={styles.ongoingTaskBody}>
+              <Text selectable style={[styles.ongoingTaskBody, themed.body]}>
                 {task.task}
               </Text>
               <View style={[commonStyles.badgeRow, styles.taskBadges]}>

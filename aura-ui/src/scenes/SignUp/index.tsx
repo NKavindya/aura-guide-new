@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { palette } from "../../theme";
+import { useThemedScreen } from "../../theme/useThemedScreen";
 import { AppCard } from "../../components/AppCard";
 import { InputField } from "../../components/InputField";
 import { PrimaryButton } from "../../components/PrimaryButton";
@@ -26,6 +27,7 @@ export function SignUpScreen({
   const [emailChecked, setEmailChecked] = useState(false);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const { colors, styles: themed } = useThemedScreen();
 
   const validateEmail = async () => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -75,13 +77,13 @@ export function SignUpScreen({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.authScroll}>
+    <ScrollView contentContainerStyle={[styles.authScroll, themed.screenBg]}>
       <View style={styles.authHero}>
         <View style={styles.logoBubble}>
           <Ionicons name="sparkles" size={34} color={palette.primary} />
         </View>
-        <Text style={styles.authTitle}>Join AURA Guide</Text>
-        <Text style={styles.authSubtitle}>Create your account and set up your growth plan.</Text>
+        <Text style={[styles.authTitle, themed.title]}>Join AURA Guide</Text>
+        <Text style={[styles.authSubtitle, themed.subtitle]}>Create your account and set up your growth plan.</Text>
       </View>
 
       <AppCard style={styles.authCard}>

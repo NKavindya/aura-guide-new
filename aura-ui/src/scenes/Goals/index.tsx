@@ -8,8 +8,11 @@ import { ScreenHeader } from "../../components/ScreenHeader";
 import { api } from "../../api/api";
 import { screenStyles } from "../../styles/screenStyles";
 
+import { useThemedScreen } from "../../theme/useThemedScreen";
+
 export function GoalsScreen() {
   const { width } = useWindowDimensions();
+  const { colors, styles: themed } = useThemedScreen();
   const [summary, setSummary] = useState<any>({
     completed_tasks: 0,
     skills: [],
@@ -56,7 +59,7 @@ export function GoalsScreen() {
   const softAvg = useMemo(() => avgPct(softSkills), [softSkills]);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, { backgroundColor: palette.background }]}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, themed.screenBg]}>
       <ScreenHeader title="Goals & Skills" subtitle="Your professional roadmap" />
 
       <AppCard style={styles.hero}>
@@ -124,6 +127,7 @@ function SkillSection({
   empty: string;
 }) {
   const barColor = tone === "tech" ? palette.primary : palette.secondary;
+  const { styles: themed } = useThemedScreen();
 
   return (
     <View style={styles.sectionContainer}>
@@ -132,21 +136,21 @@ function SkillSection({
           <Ionicons name={tone === "tech" ? "code-slash" : "chatbubbles"} size={18} color={barColor} />
         </View>
         <View>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <Text style={styles.sectionSub}>{subtitle}</Text>
+          <Text style={[styles.sectionTitle, themed.sectionTitle]}>{title}</Text>
+          <Text style={[styles.sectionSub, themed.subtitle]}>{subtitle}</Text>
         </View>
       </View>
 
       {skills.length === 0 ? (
         <AppCard style={styles.emptyCard}>
-          <Text style={styles.empty}>{empty}</Text>
+          <Text style={[styles.empty, themed.subtitle]}>{empty}</Text>
         </AppCard>
       ) : (
         <View style={commonStyles.stackMd}>
           {skills.map((skill: any) => (
             <AppCard key={String(skill.skill_id)} style={styles.skillBlock}>
               <View style={commonStyles.progressSummaryRow}>
-                <Text style={styles.skillName} numberOfLines={2}>{skill.skill_name}</Text>
+                <Text style={[styles.skillName, themed.body]} numberOfLines={2}>{skill.skill_name}</Text>
                 <View style={styles.pctBadge}>
                   <Text style={[styles.skillPct, { color: barColor }]}>
                     {skill.current_pct}%
@@ -154,11 +158,11 @@ function SkillSection({
                 </View>
               </View>
               <View style={styles.levelRow}>
-                <Text style={styles.levelHint}>
-                  Level: <Text style={styles.levelValue}>{skill.current_level || "Not assessed"}</Text>
+                <Text style={[styles.levelHint, themed.subtitle]}>
+                  Level: <Text style={[styles.levelValue, themed.body]}>{skill.current_level || "Not assessed"}</Text>
                 </Text>
-                <Text style={styles.levelHint}>
-                  Target: <Text style={styles.levelValue}>{skill.required_level || "—"}</Text>
+                <Text style={[styles.levelHint, themed.subtitle]}>
+                  Target: <Text style={[styles.levelValue, themed.body]}>{skill.required_level || "—"}</Text>
                 </Text>
               </View>
               <ProgressBar value={Math.min(skill.current_pct, 100)} color={barColor} />

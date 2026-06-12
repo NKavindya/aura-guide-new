@@ -1,21 +1,23 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { palette, commonStyles } from "../../theme";
+import { useThemedScreen } from "../../theme/useThemedScreen";
 import { AppCard } from "../../components/AppCard";
 import { ScreenHeader } from "../../components/ScreenHeader";
 import { termsIntroduction, termsSections, termsUpdatedSubtitle } from "./termsContent";
 
 export function TermsScreen({ onBack }: { onBack: () => void }) {
+  const { styles: themed } = useThemedScreen();
   return (
-    <ScrollView contentContainerStyle={styles.screenContent}>
+    <ScrollView contentContainerStyle={[styles.screenContent, themed.screenBg]}>
       <ScreenHeader title="Terms and Conditions" subtitle={termsUpdatedSubtitle} onBack={onBack} />
 
       <AppCard style={commonStyles.stackMd}>
-        <Text style={styles.intro}>{termsIntroduction}</Text>
+        <Text style={[styles.intro, themed.body]}>{termsIntroduction}</Text>
         {termsSections.map((section) => (
           <View key={section.title}>
-            <Text style={styles.termsTitle}>{section.title}</Text>
-            <Text style={styles.termsText}>{section.body}</Text>
+            <Text style={[styles.termsTitle, themed.title]}>{section.title}</Text>
+            <Text style={[styles.termsText, themed.body]}>{section.body}</Text>
           </View>
         ))}
       </AppCard>

@@ -12,8 +12,8 @@ func runMigrations(ctx context.Context) error {
 		fn   func(context.Context) error
 	}{
 		{"unique indexes", ensureUniqueIndexes},
+		{"allow multiple skill attempts", allowMultipleSkillAttempts},
 		{"dedupe reference tables", dedupeReferenceTables},
-		{"dedupe user_skills", dedupeUserSkills},
 		{"seed statuses", seedAllStatuses},
 		{"seed goal skill matrix", seedGoalSkillMatrix},
 		{"purge legacy auto plan tasks", purgeLegacyAutoPlanTasks},
@@ -33,10 +33,23 @@ CREATE UNIQUE INDEX IF NOT EXISTS category_name_unique ON category (lower(trim(n
 CREATE UNIQUE INDEX IF NOT EXISTS goals_name_unique ON goals (lower(trim(name)));
 CREATE UNIQUE INDEX IF NOT EXISTS skills_name_unique ON skills (lower(trim(name)));
 CREATE UNIQUE INDEX IF NOT EXISTS gsm_goal_skill_unique ON goal_skill_matrix (goal_id, skill_id);
-CREATE UNIQUE INDEX IF NOT EXISTS user_skills_user_skill_unique ON user_skills (user_id, skill_id);
 ALTER TABLE user_cv_analysis ADD COLUMN IF NOT EXISTS file_path TEXT;
 ALTER TABLE user_cv_analysis ADD COLUMN IF NOT EXISTS file_size BIGINT;
+CREATE TABLE IF NOT EXISTS password_reset_token (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES user_student(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS password_reset_token_user_idx ON password_reset_token (user_id);
 `)
+	return err
+}
+
+// allowMultipleSkillAttempts removes the one-row-per-skill constraint so each evaluation is stored.
+func allowMultipleSkillAttempts(ctx context.Context) error {
+	_, err := Pool.Exec(ctx, `DROP INDEX IF EXISTS user_skills_user_skill_unique`)
 	return err
 }
 

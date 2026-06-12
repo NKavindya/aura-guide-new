@@ -19,6 +19,8 @@ function avgPct(skills: { current_pct?: number }[]) {
   return Math.round(sum / skills.length);
 }
 
+import { useThemedScreen } from "../../theme/useThemedScreen";
+
 export function ProfileScreen({
   user,
   onNavigateSettings,
@@ -40,6 +42,7 @@ export function ProfileScreen({
     improvements: string[];
   } | null>(null);
   const [summary, setSummary] = useState<any>({ skills: [], completed_tasks: 0 });
+  const { colors, styles: themed } = useThemedScreen();
   const [downloadingCv, setDownloadingCv] = useState(false);
 
   useEffect(() => {
@@ -123,13 +126,13 @@ export function ProfileScreen({
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={screenStyles.scrollContent}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, themed.screenBg]}>
       <ScreenHeader
         title="Profile"
         subtitle="Your learning identity"
         rightAction={
           <Pressable onPress={onNavigateSettings} style={styles.roundBtn}>
-            <Ionicons name="settings-outline" size={21} color={palette.text} />
+            <Ionicons name="settings-outline" size={21} color={colors.text} />
           </Pressable>
         }
       />
@@ -142,10 +145,10 @@ export function ProfileScreen({
             </View>
           </View>
           <View style={commonStyles.flexOne}>
-            <Text style={styles.displayName}>
+            <Text style={[styles.displayName, themed.title]}>
               {form.firstName} {form.lastName}
             </Text>
-            <Text style={styles.email}>{form.email}</Text>
+            <Text style={[styles.email, themed.subtitle]}>{form.email}</Text>
             <View style={[styles.miniChips, { marginTop: 10 }]}>
               <Text style={styles.chip}>{user.goal || "Goal unset"}</Text>
               <Text style={styles.chip}>{form.degreeProgram || "Degree"}</Text>
@@ -159,7 +162,7 @@ export function ProfileScreen({
 
       {isEditing ? (
           <AppCard style={commonStyles.stackSm}>
-            <Text style={styles.sectionLabel}>Edit details</Text>
+            <Text style={[styles.sectionLabel, themed.sectionTitle]}>Edit details</Text>
             <InputField label="First name" placeholder="First name" value={form.firstName} onChangeText={(v) => setForm({ ...form, firstName: v })} />
             <InputField label="Last name" placeholder="Last name" value={form.lastName} onChangeText={(v) => setForm({ ...form, lastName: v })} />
             <InputField label="University" placeholder="University" value={form.university} onChangeText={(v) => setForm({ ...form, university: v })} />
@@ -237,9 +240,9 @@ export function ProfileScreen({
       ) : null}
 
       <AppCard>
-        <Text style={styles.sectionLabel}>CV & analysis</Text>
+        <Text style={[styles.sectionLabel, themed.sectionTitle]}>CV & analysis</Text>
         {cvItems.length === 0 ? (
-          <Text style={styles.cvEmpty}>No CV on file yet. Upload a PDF from AI Coach for agent analysis.</Text>
+          <Text style={[styles.cvEmpty, themed.subtitle]}>No CV on file yet. Upload a PDF from AI Coach for agent analysis.</Text>
         ) : (
           cvItems.map((cv: any) => (
             <View key={`${cv.file_name}-${cv.uploaded_at}`} style={styles.cvRow}>
@@ -247,8 +250,8 @@ export function ProfileScreen({
                 <Ionicons name="document-text" size={20} color={palette.primary} />
               </View>
               <View style={commonStyles.flexOne}>
-                <Text style={styles.cvFile}>{cv.file_name}</Text>
-                <Text style={styles.cvDate}>{String(cv.uploaded_at).slice(0, 16).replace("T", " · ")}</Text>
+                <Text style={[styles.cvFile, themed.body]}>{cv.file_name}</Text>
+                <Text style={[styles.cvDate, themed.subtitle]}>{String(cv.uploaded_at).slice(0, 16).replace("T", " · ")}</Text>
               </View>
               <Pressable
                 onPress={downloadCv}
@@ -265,9 +268,9 @@ export function ProfileScreen({
           <View style={styles.cvInsightBlock}>
             {cvInsights.strengths.length ? (
               <View style={styles.cvInsightColumn}>
-                <Text style={styles.cvInsightTitle}>Strengths</Text>
+                <Text style={[styles.cvInsightTitle, themed.title]}>Strengths</Text>
                 {cvInsights.strengths.slice(0, 8).map((line, i) => (
-                  <Text key={`s-${i}`} style={styles.cvBullet}>
+                  <Text key={`s-${i}`} style={[styles.cvBullet, themed.body]}>
                     • {prettifyCvLine(line)}
                   </Text>
                 ))}
@@ -275,9 +278,9 @@ export function ProfileScreen({
             ) : null}
             {cvInsights.weaknesses.length ? (
               <View style={styles.cvInsightColumn}>
-                <Text style={styles.cvInsightTitle}>Growth areas</Text>
+                <Text style={[styles.cvInsightTitle, themed.title]}>Growth areas</Text>
                 {cvInsights.weaknesses.slice(0, 8).map((line, i) => (
-                  <Text key={`w-${i}`} style={styles.cvBullet}>
+                  <Text key={`w-${i}`} style={[styles.cvBullet, themed.body]}>
                     • {prettifyCvLine(line)}
                   </Text>
                 ))}
@@ -303,14 +306,15 @@ function Metric({
   subtitle?: string;
   tint: string;
 }) {
+  const { styles: themed } = useThemedScreen();
   return (
     <View style={styles.metricCell}>
       <View style={[styles.metricIconBg, { backgroundColor: tint + "22" }]}>
         <Ionicons name={icon} size={22} color={tint} />
       </View>
-      <Text style={styles.metricValue}>{value}</Text>
-      <Text style={styles.metricCap}>{label}</Text>
-      {subtitle ? <Text style={styles.metricSub}>{subtitle}</Text> : null}
+      <Text style={[styles.metricValue, themed.title]}>{value}</Text>
+      <Text style={[styles.metricCap, themed.subtitle]}>{label}</Text>
+      {subtitle ? <Text style={[styles.metricSub, themed.subtitle]}>{subtitle}</Text> : null}
     </View>
   );
 }

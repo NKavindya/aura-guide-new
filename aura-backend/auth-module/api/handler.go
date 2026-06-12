@@ -141,3 +141,57 @@ func SignoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"message": "Logout successful"})
 }
+
+type ResetRequestBody struct {
+	Email string `json:"email"`
+}
+
+type ResetConfirmBody struct {
+	Email       string `json:"email"`
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+func RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+	var body ResetRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	err := service.RequestPasswordReset(r.Context(), body.Email)
+	if err != nil {
+		if errors.Is(err, service.ErrResetEmailNotConfigured) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error":   err.Error(),
+				"message": "Email delivery is not configured. Set SMTP_HOST and SMTP_FROM on the server.",
+			})
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "If an account exists for this email, reset instructions have been sent.",
+	})
+}
+
+func ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+	var body ResetConfirmBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+	if err := service.CompletePasswordReset(r.Context(), body.Email, body.Token, body.NewPassword); err != nil {
+		code := http.StatusBadRequest
+		if errors.Is(err, service.ErrInvalidResetToken) {
+			code = http.StatusUnauthorized
+		}
+		http.Error(w, err.Error(), code)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"message": "Password updated successfully"})
+}

@@ -111,7 +111,9 @@ func DeleteProfileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := service.DeleteProfile(r.Context(), email); err != nil {
-		http.Error(w, "Error deleting profile", http.StatusInternalServerError)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 

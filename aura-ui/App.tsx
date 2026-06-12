@@ -5,7 +5,8 @@ import { StyleSheet, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
-import { palette } from "./src/theme";
+import { palette, setTheme } from "./src/theme";
+import { ThemeProvider } from "./src/theme/ThemeContext";
 import { Route, TabRoute, UserProfile } from "./src/types";
 import { initialProfile, tabRoutes } from "./src/constants";
 import { notificationSeed } from "./src-native/mockData";
@@ -155,16 +156,32 @@ export default function App() {
     }
   };
 
+  useEffect(() => {
+    AsyncStorage.getItem("aura_dark_mode").then((v) => {
+      if (v === "1") setSettings((s) => ({ ...s, darkMode: true }));
+    });
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem("aura_dark_mode", settings.darkMode ? "1" : "0");
+    setTheme(settings.darkMode);
+  }, [settings.darkMode]);
+
+  const handleDeleteAccount = async () => {
+    await api.deleteAccount();
+    setUser(initialProfile);
+    setNotifications([]);
+    setPendingAgentTask(undefined);
+    setIsReturningUser(false);
+    setRoute("signin");
+    setTab("dashboard");
+  };
+
   const handleSignOut = async () => {
     await api.logout();
     setRoute("signin");
     setTab("dashboard");
   };
-
-  useEffect(() => {
-    const { setTheme } = require("./src/theme");
-    setTheme(settings.darkMode);
-  }, [settings.darkMode]);
 
   const activeRoute = tabRoutes.includes(route as any) ? tab : route;
   const appBg = settings.darkMode ? "#0F172A" : "#F8FAFC";
@@ -252,11 +269,7 @@ export default function App() {
             }}
             onBack={() => setRoute("profile")}
             onSignOut={handleSignOut}
-            onDeleteAccount={async () => {
-              await api.deleteAccount();
-              setRoute("signin");
-              setTab("dashboard");
-            }}
+            onDeleteAccount={handleDeleteAccount}
           />
         );
       case "notifications":
@@ -282,13 +295,15 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View style={styles.container}>
-        <StatusBar style={settings.darkMode ? "light" : "dark"} />
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: appBg }]} edges={["top", "left", "right"]}>
-          {renderContent()}
-        </SafeAreaView>
-        {showTabs && <BottomTabs current={tab} onNavigate={(route: TabRoute) => setTab(route)} />}
-      </View>
+      <ThemeProvider isDark={settings.darkMode}>
+        <View style={styles.container}>
+          <StatusBar style={settings.darkMode ? "light" : "dark"} />
+          <SafeAreaView style={[styles.safeArea, { backgroundColor: appBg }]} edges={["top", "left", "right"]}>
+            {renderContent()}
+          </SafeAreaView>
+          {showTabs && <BottomTabs current={tab} onNavigate={(route: TabRoute) => setTab(route)} />}
+        </View>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

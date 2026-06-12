@@ -1,22 +1,36 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useMemo } from "react";
 import { StyleSheet, View } from "react-native";
-import { cardShadow, palette } from "../../theme";
+import { cardShadow } from "../../theme";
+import { useTheme } from "../../theme/ThemeContext";
 
-export function AppCard({ children, style, variant = "default" }: { children: ReactNode; style?: object; variant?: "default" | "muted" }) {
+export function AppCard({
+  children,
+  style,
+  variant = "default",
+}: {
+  children: ReactNode;
+  style?: object;
+  variant?: "default" | "muted";
+}) {
+  const { colors } = useTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          backgroundColor: colors.surface,
+          borderRadius: 24,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 20,
+          ...cardShadow.shadow,
+        },
+        cardMuted: {
+          backgroundColor: colors.surfaceMuted,
+          borderColor: "transparent",
+        },
+      }),
+    [colors],
+  );
+
   return <View style={[styles.card, variant === "muted" && styles.cardMuted, style]}>{children}</View>;
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: palette.border,
-    padding: 20,
-    ...cardShadow.shadow,
-  },
-  cardMuted: {
-    backgroundColor: palette.surfaceMuted,
-    borderColor: "transparent",
-  },
-});

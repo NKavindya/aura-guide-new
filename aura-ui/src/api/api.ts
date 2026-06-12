@@ -80,13 +80,48 @@ export const api = {
     return response.json();
   },
   async deleteAccount() {
+    const token = await AsyncStorage.getItem("auth_token");
+    if (!token) throw new Error("Not signed in");
     const response = await fetch(`${API_BASE_URL}/users/profile/me`, {
       method: "DELETE",
-      headers: await authHeaders(false),
+      headers: { Authorization: `Bearer ${token}` },
+      ...(Platform.OS === "web" ? { credentials: "include" as RequestCredentials } : {}),
     });
-    if (!response.ok) throw new Error(await response.text());
+    if (!response.ok) {
+      let msg = await response.text();
+      try {
+        const j = JSON.parse(msg);
+        if (j?.error) msg = j.error;
+      } catch {
+        /* plain */
+      }
+      throw new Error(msg || "Delete failed");
+    }
     await AsyncStorage.removeItem("auth_token");
-    return response.json();
+    await AsyncStorage.removeItem("aura_returning_user");
+    try {
+      return await response.json();
+    } catch {
+      return { message: "Profile deleted successfully" };
+    }
+  },
+  async requestPasswordReset(email: string) {
+    const response = await fetch(`${API_BASE_URL}/auth/request-password-reset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    });
+    const raw = await response.text();
+    let data: any = {};
+    try {
+      data = raw ? JSON.parse(raw) : {};
+    } catch {
+      data = { error: raw };
+    }
+    if (!response.ok) {
+      throw new Error(data.error || data.message || raw || "Request failed");
+    }
+    return data;
   },
   async getCareerPath() {
     const response = await fetch(`${API_BASE_URL}/user/careerPath`, {

@@ -288,7 +288,7 @@ OUTPUT FORMAT:
             data = extract_json_object(raw2)
         score = int(data.get("score") or 2)
         score = max(1, min(3, score))
-        feedback = str(data.get("feedback") or "").strip()
+        feedback = clean_coach_question_text(str(data.get("feedback") or "").strip())
     except Exception:
         score = 2
         feedback = (
@@ -361,7 +361,7 @@ OUTPUT FORMAT:
         data = extract_json_object(raw2)
     score = int(data.get("score") or 2)
     score = max(1, min(3, score))
-    feedback = str(data.get("feedback") or data.get("Feedback") or "").strip()
+    feedback = clean_coach_question_text(str(data.get("feedback") or data.get("Feedback") or "").strip())
     if not feedback:
         feedback = "Review your messages for clarity, tone, and the 7Cs (clear through courteous)."
     return {"score": score, "feedback": feedback}
@@ -774,10 +774,22 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 "feedback" must address only this skill. "improvement_tip" must be one actionable sentence or empty."""
 
     raw = await structured_completion(system, user)
-    data = extract_json_object(raw)
+    try:
+        data = extract_json_object(raw)
+    except Exception:
+        raw2 = await structured_completion(
+            system,
+            user
+            + "\n\nYour last reply was not valid JSON. Reply with ONLY one JSON object "
+            "containing skill, score (1-3 integer), feedback (string), improvement_tip (string). "
+            "Escape any quotes inside feedback.",
+        )
+        data = extract_json_object(raw2)
     score = max(1, min(3, int(data.get("score") or 2)))
-    feedback = str(data.get("feedback") or "").strip()
-    tip = str(data.get("improvement_tip") or "").strip()
+    feedback = clean_coach_question_text(str(data.get("feedback") or "").strip())
+    if not feedback:
+        feedback = "Thanks for your submission. Review the task criteria and try another practice task to improve."
+    tip = clean_coach_question_text(str(data.get("improvement_tip") or "").strip())
 
     with get_conn() as conn:
         upsert_user_skill_score(conn, uid, skill_name, score)

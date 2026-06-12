@@ -1,3 +1,4 @@
+import ast
 import json
 import re
 
@@ -6,7 +7,6 @@ def _strip_markdown_fences(text: str) -> str:
     s = (text or "").strip()
     if not s.startswith("```"):
         return s
-    # ```json\n{...}\n```
     lines = s.split("\n")
     if not lines:
         return s
@@ -19,7 +19,6 @@ def _strip_markdown_fences(text: str) -> str:
 
 
 def _brace_match_object(s: str, start: int) -> str | None:
-    """Return substring from first balanced { ... } starting at start, or None."""
     if start < 0 or start >= len(s) or s[start] != "{":
         return None
     depth = 0
@@ -51,23 +50,56 @@ def _brace_match_object(s: str, start: int) -> str | None:
     return None
 
 
+def _try_ast_dict(chunk: str) -> dict | None:
+    try:
+        val = ast.literal_eval(chunk)
+        if isinstance(val, dict):
+            return val
+    except Exception:
+        pass
+    return None
+
+
+def _loads_flexible(chunk: str) -> dict:
+    attempts = [
+        chunk,
+        chunk.replace("'", '"'),
+        re.sub(r",\s*}", "}", chunk),
+    ]
+    for candidate in attempts:
+        try:
+            data = json.loads(candidate)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError:
+            continue
+    parsed = _try_ast_dict(chunk)
+    if parsed is not None:
+        return parsed
+    raise ValueError("could not parse model JSON")
+
+
 def extract_json_object(text: str) -> dict:
-    """Parse first JSON object from model output (handles ``` fences and nested braces)."""
+    """Parse first JSON/Python-dict object from model output."""
     s = _strip_markdown_fences(text)
-    # If fences left inline content, strip again
     if "```" in s:
         s = _strip_markdown_fences(s)
     if not s:
         raise ValueError("empty model response")
 
-    # Avoid broken non-greedy regex: find { and brace-match with string awareness
     brace = s.find("{")
     if brace == -1:
         raise ValueError("no JSON object in response")
     chunk = _brace_match_object(s, brace)
     if not chunk:
-        raise ValueError("unbalanced JSON braces")
-    return json.loads(chunk)
+        last = s.rfind("}")
+        if last > brace:
+            chunk = s[brace : last + 1]
+        else:
+            raise ValueError(
+                "could not parse coach response — the model returned malformed JSON. Please try again."
+            )
+    return _loads_flexible(chunk)
 
 
 def clean_coach_question_text(text: str) -> str:
@@ -76,19 +108,34 @@ def clean_coach_question_text(text: str) -> str:
     if t.startswith("{"):
         try:
             data = extract_json_object(t)
-            q = data.get("question")
-            if q is not None:
-                t = str(q).strip()
+            for key in ("question", "description", "text", "prompt"):
+                q = data.get(key)
+                if isinstance(q, str) and q.strip():
+                    t = q.strip()
+                    break
         except Exception:
-            pass
+            parsed = _try_ast_dict(t)
+            if parsed:
+                for key in ("question", "description", "text"):
+                    v = parsed.get(key)
+                    if isinstance(v, str) and v.strip():
+                        t = v.strip()
+                        break
     t = re.sub(r"\*\*([^*]+)\*\*", r"\1", t)
     t = re.sub(r"^#+\s*", "", t, flags=re.MULTILINE)
     t = re.sub(r"^[`\"']+|[`\"']+$", "", t.strip())
+    if t.startswith("{") and ("'id'" in t or '"id"' in t):
+        try:
+            data = extract_json_object(t)
+            desc = data.get("description") or data.get("question")
+            if isinstance(desc, str) and desc.strip():
+                t = desc.strip()
+        except Exception:
+            pass
     return t.strip()
 
 
 def coerce_cv_feedback_line(item: object) -> str:
-    """Flatten model output so CV bullets are readable (models often emit {{id, description}} objects)."""
     if item is None:
         return ""
     if isinstance(item, str):

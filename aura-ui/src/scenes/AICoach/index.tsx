@@ -20,7 +20,8 @@ import { Message } from "../../types";
 import { api } from "../../api/api";
 import { screenPadding } from "../../styles/screenStyles";
 import { prettifyCvLine } from "../../utils/cvFeedback";
-import { formatCoachQuestion } from "../../utils/coachText";
+import { formatCoachQuestion, sanitizeCoachFeedback } from "../../utils/coachText";
+import { useTheme } from "../../theme/ThemeContext";
 
 const PROMPTS = [
   {
@@ -86,7 +87,9 @@ export function AICoachScreen({
   const [isUploading, setIsUploading] = useState(false);
   const [fileName, setFileName] = useState("");
   const [interviewShowNext, setInterviewShowNext] = useState(false);
+  const [inputHeight, setInputHeight] = useState(44);
   const scrollRef = useRef<ScrollView>(null);
+  const { colors } = useTheme();
 
   const activeTaskAnswer = useMemo((): PendingTaskAnswerPayload | null => {
     if (phase.kind === "task_answer") return phase.payload;
@@ -101,12 +104,13 @@ export function AICoachScreen({
   }, [height, phase.kind]);
 
   const pushAura = useCallback((content: string, category?: string) => {
+    const cleaned = sanitizeCoachFeedback(content);
     setMessages((c) => [
       ...c,
       {
         id: Date.now() + Math.random(),
         type: "aura",
-        content,
+        content: cleaned,
         timestamp: fmtTime(new Date()),
         category,
       },
@@ -509,8 +513,13 @@ export function AICoachScreen({
       const lower = name.toLowerCase();
       const mime = (asset.mimeType || "").toLowerCase();
       const pdfMsg =
-        "Only .pdf files can be uploaded as your CV. Other formats are not accepted - export your document as PDF and try again.";
+        "Only PDF documents can be uploaded as your CV. Word (.doc, .docx), text (.txt), and other formats are not accepted — export your résumé as PDF and try again.";
       if (!lower.endsWith(".pdf")) {
+        Alert.alert("PDF only", pdfMsg);
+        return;
+      }
+      const blockedExt = [".doc", ".docx", ".txt", ".rtf", ".odt", ".pages"];
+      if (blockedExt.some((ext) => lower.endsWith(ext))) {
         Alert.alert("PDF only", pdfMsg);
         return;
       }
@@ -704,7 +713,9 @@ export function AICoachScreen({
                     <Text style={styles.categoryText}>{message.category}</Text>
                   </View>
                 ) : null}
-                <Text style={[styles.msgText, isUser && styles.msgTextUser]}>{message.content}</Text>
+                <Text style={[styles.msgText, isUser && styles.msgTextUser, !isUser && { color: colors.text }]}>
+                  {message.content}
+                </Text>
                 {message.timestamp ? (
                   <Text style={[styles.msgTime, isUser && styles.msgTimeUser]}>{message.timestamp}</Text>
                 ) : null}
@@ -748,9 +759,20 @@ export function AICoachScreen({
               value={input}
               onChangeText={setInput}
               placeholder="Type your message…"
-              placeholderTextColor={palette.muted}
-              style={styles.footerInput}
+              placeholderTextColor={colors.muted}
+              style={[
+                styles.footerInput,
+                {
+                  color: colors.text,
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  height: Math.min(160, Math.max(44, inputHeight)),
+                },
+              ]}
               multiline
+              onContentSizeChange={(e) => {
+                setInputHeight(e.nativeEvent.contentSize.height + 16);
+              }}
             />
             <Pressable accessibilityLabel="Send" onPress={sendComposer} style={styles.sendFab}>
               <Ionicons name="send" size={20} color="#FFFFFF" />

@@ -11,6 +11,7 @@ import { PrimaryButton } from "../../components/PrimaryButton";
 import { InputField } from "../../components/InputField";
 import { api } from "../../api/api";
 import { screenStyles } from "../../styles/screenStyles";
+import { useThemedScreen } from "../../theme/useThemedScreen";
 import { PendingTaskAnswerPayload } from "../AICoach";
 
 function statusLabel(status: string | undefined) {
@@ -101,6 +102,7 @@ export function TasksScreen({
   const [editTaskName, setEditTaskName] = useState("");
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
+  const { colors, styles: themed } = useThemedScreen();
   const safeDate = (value: any) => (typeof value === "string" ? value : "");
 
   const loadTasks = async () => {
@@ -218,7 +220,7 @@ export function TasksScreen({
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, { backgroundColor: palette.background }]}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[screenStyles.scrollContent, themed.screenBg]}>
       <ScreenHeader
         title="Tasks"
         subtitle="Stay on top of your plan"
@@ -334,7 +336,7 @@ export function TasksScreen({
           <AppCard key={`${task.task_origin ?? "custom"}-${task.id}`} style={styles.taskCard}>
             <View style={styles.cardTop}>
               <View style={commonStyles.flexOne}>
-                <Text selectable style={styles.taskDescription}>
+                <Text selectable style={[styles.taskDescription, themed.body]}>
                   {task.task}
                 </Text>
                 <View style={[commonStyles.badgeRow, styles.badges]}>

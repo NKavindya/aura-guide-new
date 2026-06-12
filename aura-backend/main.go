@@ -83,6 +83,8 @@ func main() {
 	r.Post("/auth/signup", authApi.SignupHandler)
 	r.Post("/auth/signin", authApi.SigninHandler)
 	r.Post("/auth/signout", authApi.SignoutHandler)
+	r.Post("/auth/request-password-reset", authApi.RequestPasswordResetHandler)
+	r.Post("/auth/reset-password", authApi.ConfirmPasswordResetHandler)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.AuthMiddleware)

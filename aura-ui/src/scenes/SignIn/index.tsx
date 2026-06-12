@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { palette } from "../../theme";
 import { AppCard } from "../../components/AppCard";
 import { InputField } from "../../components/InputField";
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { TextLink } from "../../components/TextLink";
 import { initialProfile } from "../../constants";
+import { useThemedScreen } from "../../theme/useThemedScreen";
 
 export function SignInScreen({
   onSignIn,
@@ -21,15 +21,16 @@ export function SignInScreen({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const canSubmit = Boolean(email.trim()) && password.length > 0;
+  const { colors, styles: themed } = useThemedScreen();
 
   return (
-    <ScrollView contentContainerStyle={styles.authScroll}>
+    <ScrollView contentContainerStyle={[styles.authScroll, themed.screenBg]}>
       <View style={styles.authHero}>
-        <View style={styles.logoBubble}>
-          <Ionicons name="school" size={36} color={palette.primary} />
+        <View style={[styles.logoBubble, { backgroundColor: colors.surface }]}>
+          <Ionicons name="school" size={36} color={colors.primary} />
         </View>
-        <Text style={styles.authTitle}>Welcome back</Text>
-        <Text style={styles.authSubtitle}>Sign in to continue your AURA journey.</Text>
+        <Text style={[styles.authTitle, themed.title]}>Welcome back</Text>
+        <Text style={[styles.authSubtitle, themed.subtitle]}>Sign in to continue your AURA journey.</Text>
       </View>
 
       <AppCard style={styles.authCard}>
@@ -39,7 +40,7 @@ export function SignInScreen({
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
-          icon={<Feather name="mail" size={18} color={palette.muted} />}
+          icon={<Feather name="mail" size={18} color={colors.muted} />}
         />
 
         <InputField
@@ -48,7 +49,7 @@ export function SignInScreen({
           value={password}
           onChangeText={setPassword}
           secureTextEntry={!showPassword}
-          icon={<Feather name="lock" size={18} color={palette.muted} />}
+          icon={<Feather name="lock" size={18} color={colors.muted} />}
         />
 
         <View style={styles.inlineRow}>
@@ -64,7 +65,7 @@ export function SignInScreen({
       </AppCard>
 
       <View style={styles.authFooter}>
-        <Text style={styles.authFooterText}>Don't have an account?</Text>
+        <Text style={[styles.authFooterText, themed.subtitle]}>Don't have an account?</Text>
         <TextLink label="Create one here" onPress={onOpenSignUp} />
       </View>
     </ScrollView>
@@ -94,13 +95,11 @@ const styles = StyleSheet.create({
   authTitle: {
     fontSize: 30,
     fontWeight: "800",
-    color: palette.text,
     textAlign: "center",
   },
   authSubtitle: {
     maxWidth: 300,
     textAlign: "center",
-    color: palette.muted,
     lineHeight: 22,
   },
   authCard: {
@@ -112,9 +111,7 @@ const styles = StyleSheet.create({
     gap: 6,
     alignItems: "center",
   },
-  authFooterText: {
-    color: palette.muted,
-  },
+  authFooterText: {},
   inlineRow: {
     flexDirection: "row",
     justifyContent: "space-between",

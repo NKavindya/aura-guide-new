@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { palette, commonStyles } from "../../theme";
+import { useThemedScreen } from "../../theme/useThemedScreen";
 import { AppCard } from "../../components/AppCard";
 import { InputField } from "../../components/InputField";
 import { PickerField } from "../../components/PickerField";
@@ -38,12 +39,13 @@ export function OnboardingScreen({
   const canContinue = step === 1
     ? Boolean(firstName && lastName && email)
     : Boolean(university && degreeProgram && studyYear && goal && technicalSkillLevel && softSkillLevel && availabilityType && availabilityHours);
+  const { styles: themed } = useThemedScreen();
 
   return (
-    <ScrollView contentContainerStyle={styles.screenContent}>
-      <Text style={styles.kicker}>Step {step} of 2</Text>
-      <Text style={styles.onboardingTitle}>{step === 1 ? "Personal information" : "Academic details"}</Text>
-      <Text style={styles.onboardingSubtitle}>
+    <ScrollView contentContainerStyle={[styles.screenContent, themed.screenBg]}>
+      <Text style={[styles.kicker, themed.subtitle]}>Step {step} of 2</Text>
+      <Text style={[styles.onboardingTitle, themed.title]}>{step === 1 ? "Personal information" : "Academic details"}</Text>
+      <Text style={[styles.onboardingSubtitle, themed.subtitle]}>
         We use this information to tailor your dashboard, goals, and AI coaching prompts.
       </Text>
 

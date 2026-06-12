@@ -9,33 +9,13 @@ def skill_id(conn, skill_name: str) -> int:
 
 
 def upsert_user_skill_score(conn, user_id: int, skill_name: str, score_1_to_3: int) -> None:
-    """Merge evaluation into user_skills using a running average across attempts."""
+    """Append each evaluation as its own row so averages reflect all attempts (not rounded early)."""
     sid = max(1, min(3, int(score_1_to_3)))
     sk = skill_id(conn, skill_name)
-
-    rows = conn.execute(
-        "SELECT id, score_id FROM user_skills WHERE user_id = %s AND skill_id = %s",
-        (user_id, sk),
-    ).fetchall()
-
-    if rows:
-        scores = [int(r["score_id"]) for r in rows if r.get("score_id")]
-        scores.append(sid)
-        avg = round(sum(scores) / len(scores))
-        avg = max(1, min(3, avg))
-        conn.execute(
-            "DELETE FROM user_skills WHERE user_id = %s AND skill_id = %s",
-            (user_id, sk),
-        )
-        conn.execute(
-            "INSERT INTO user_skills (user_id, skill_id, score_id) VALUES (%s, %s, %s)",
-            (user_id, sk, avg),
-        )
-    else:
-        conn.execute(
-            "INSERT INTO user_skills (user_id, skill_id, score_id) VALUES (%s, %s, %s)",
-            (user_id, sk, sid),
-        )
+    conn.execute(
+        "INSERT INTO user_skills (user_id, skill_id, score_id) VALUES (%s, %s, %s)",
+        (user_id, sk, sid),
+    )
 
 
 def status_id_by_name(conn, name: str) -> int:
