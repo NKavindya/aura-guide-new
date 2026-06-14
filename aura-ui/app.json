@@ -6,6 +6,12 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": ["android", "ios", "web"],
+    "android": {
+      "package": "com.entgra.auraguide"
+    },
+    "ios": {
+      "bundleIdentifier": "com.entgra.auraguide"
+    },
     "web": {
       "bundler": "metro"
     }
